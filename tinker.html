@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="d3-3d.js"></script>
+<body>
+<script>
+
+    var matrix = [
+        [[223, 23, 24, 26],
+        [2,98,6,7],
+        [6,2,4,534],
+        [25, 26, 73 ,4]]
+    ];
+    var tr = d3.select('body')
+    .append('table')
+    .selectAll('tr')
+    .data(matrix)
+    .enter().append('tr');
+
+    var td = tr.selectAll('td')
+    .data(function(d) {return d;})
+    .enter().append('td')
+    .text(function(d) {return d;});
+</script>
+</body>
