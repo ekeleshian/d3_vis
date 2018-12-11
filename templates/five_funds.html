@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    .chart rect {
+        fill: steelblue;
+    }
+    .chart text {
+        fill: black;
+        font: 10px sans-serif;
+        text-anchor: middle;
+    }
+    .axis text {
+        font: 10px sans-serif;
+        fill: black;
+    }
+
+    .axis path,
+
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    .x-axis path {
+        display: none;
+    }
+</style>
+<svg class="chart"></svg>
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script>
+
+
+    d3.json('data', function(json) {
+    data=json;
+
+    var x = data.input;
+    var y = data.output;
+    function zip(arrays){
+        return arrays[0].map(function(_,i){
+            return arrays.map(function(array){return array[i]})
+        });
+    }
+    var zip_result = zip([x,y]);
+    var clean_result = []
+
+
+    for (var i = 0; i < zip_result.length; i++){
+        if (+zip_result[i][1] != 0){
+            zip_result[i][1] = +zip_result[i][1]
+            data = {key: zip_result[i][0], value: zip_result[i][1]}
+            clean_result.push(data);
+        }
+    }
+
+    visualize(clean_result);
+    });
+
+    function visualize(data){
+        var margin = {top: 20, right: 30, bottom: 30, left: 40},
+            width = 960 - margin.left - margin.right,
+            height = 800 - margin.top - margin.bottom;
+
+        var x = d3.scale.ordinal()
+                        .rangeRoundBands([0, width], .1);
+
+        var y = d3.scale.linear()
+                  .range([height,0]);
+
+        var xAxis = d3.svg.axis()
+                          .scale(x)
+                          .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+                          .scale(y)
+                          .orient("left")
+                          .ticks(10);
+
+        var chart = d3.select('.chart')
+                      .attr("width", width + margin.left + margin.right)
+                      .attr("height", height + margin.top + margin.bottom)
+                      .append("g")
+                      .attr("transform", "translate(" + (margin.left+10) + "," + (margin.top-50) + ")");
+
+        x.domain(data.map(function(d) {return d.key; }));
+        y.domain([0, d3.max(data, function(d) { return d.value;})]);
+
+
+
+        chart.append("g")
+             .attr("class", "x-axis")
+             .attr("transform", "translate(0," + height + ")")
+             .call(xAxis)
+             .selectAll("text")
+             .style("text-anchor", "end")
+             .attr("dx", "-.8em")
+             .attr("dy", "-.55em")
+             .attr("transform", "rotate(-90)");
+
+        chart.append("g")
+             .attr("class", "y-axis")
+             .call(yAxis)
+             .append("text")
+             .attr("transform", "rotate(-90)")
+             .attr("y", 6)
+             .attr("x", -50)
+             .attr("dy", ".71em")
+             .style("text-anchor", "end")
+             .text("SHR value");
+
+        chart.selectAll(".bar") 
+                       .data(data)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("x", function(d){ return x(d.key); })
+                       .attr("y", function(d) { return y(d.value); })
+                       .attr("height", function(d){ return height - y(d.value); })
+                       .attr("width", x.rangeBand());
+
+        // bar.append("text")
+        //    .attr("x", barWidth/2)
+        //    .attr("y", function(d) {return y(d.value) + 3;})
+        //    .attr("dy", ".75em")
+        //    .text(function(d) { return d.value; });
+
+        
+    }
+    // debugger;});
+
+    // var data0 = [
+    // { gpa: 3.42, height: 138 },
+    // { gpa: 3.54, height: 153 },
+    // { gpa: 3.14, height: 148 },
+    // { gpa: 2.76, height: 164 },
+    // { gpa: 2.95, height: 162 },
+    // { gpa: 3.36, height: 143 }
+    // ]
+    // var data1 = [
+    // { gpa: 3.15, height: 157 },
+    // { gpa: 3.12, height: 175 },
+    // { gpa: 3.67, height: 167 },
+    // { gpa: 3.85, height: 149 },
+    // { gpa: 2.32, height: 165 },
+    // { gpa: 3.01, height: 171 },
+    // { gpa: 3.54, height: 168 },
+    // { gpa: 2.89, height: 180 },
+    // { gpa: 3.75, height: 153 }
+    // ]
+    // var svg = d3.select("#canvas");
+
+    // var margin = {top: 10, right: 10, bottom:50, left:50};
+    // var width = +svg.attr("width") - margin.left - margin.right;
+    // var height = +svg.attr("height") - margin.top - margin.bottom;
+
+    // var g = svg.append("g")
+    //            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+    // var x = d3.scaleLinear()
+    //     .range([0, width]);
+
+    // var y = d3.scaleLinear()
+    //     .range([height, 0]);
+
+    // var xAxisCall = d3.axisBottom(x)
+    // var xAxis = g.append("g")
+    //              .attr("class", "x-axis")
+    //              .attr("transform", "translate(" + 0 + "," + height + ")")
+    //              .attr("text-anchor", "start");
+    //              // .call(xAxisCall);
+
+    // var yAxisCall = d3.axisLeft(y)
+    // var yAxis = g.append("g")
+    //              .attr("class", "y-axis");
+    //              // .call(yAxisCall);
+
+    // xAxis.append("text")
+    //      .attr("class", "axis-title")
+    //      .attr("transform", "translate("+ (width - 50) + ", 0)" )
+    //      .attr("y", -6)
+    //      .text("Grade Point Average")
+    //      .attr("fill", "black");
+
+    // yAxis.append("text")
+    //      .attr("class", "axis-title")
+    //      .attr("transform", "rotate(-90)")
+    //      .attr("y", 16)
+    //      .text("Height / Centimeters")
+    //      .attr("fill", "black");
+
+
+    // var flag = true;
+    // //Run this code every 1000 ms
+    // d3.interval(function() { 
+    //     data = flag ? data0 : data1;
+
+    //     update(data);
+
+    //     flag = !flag;
+    // },1000)
+
+    // update(data0);
+
+    // function update(data){
+
+    //     var t = d3.transition().duration(750);
+
+
+    //     x.domain([d3.min(data, function(d) { return d.gpa; })/1.05,
+    //         d3.max(data,function(d) { return d.gpa; }) * 1.05])
+    //     y.domain([d3.min(data, function(d) { return d.height; })/1.05,
+    //         d3.max(data,function(d) { return d.height; }) * 1.05])
+
+    //     xAxis.transition(t).call(xAxisCall);
+    //     yAxis.transition(t).call(yAxisCall);
+
+    //     var circles = g.selectAll("circle")
+    //     .data(data);
+
+    //     circles.exit().transition(t)
+    //     .attr("fill-opacity", 0.1)
+    //     .attr("cy", y(0))
+    //     .remove()
+
+    //     circles.transition(t)
+    //             .attr("cx", function(d){ return x(d.gpa) })
+    //             .attr("cy", function(d){ return y(d.height) })
+
+
+    //     circles.enter()
+    //         .append("circle")
+    //             .attr("cx", function(d){ return x(d.gpa) })
+    //             .attr("cy", y(0))
+    //             .attr("r", 5)
+    //             .attr("fill", "grey")
+    //             .attr("fill-opacity", 0.1)
+    //             .transition(t)
+    //             .attr("fill-opacity", 1)
+    //             .attr("cy", function(d){ return y(d.height)});
+
+    // }
+
+</script>
+
+</html>
+
