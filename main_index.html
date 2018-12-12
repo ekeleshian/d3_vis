@@ -49,7 +49,7 @@
 
     d3.json("main_bubble.json", function(error, root){
         console.log(error);
-        debugger;
+        // debugger;
         var bubbleObj = svg.selectAll(".parentBubble")
         .data(root.children)
         .enter()
@@ -72,7 +72,8 @@
     .attr("width", oR)
     .attr("height", oR)
     .style("opacity", 0.7)
-    .on("mouseover", function(d, i){ return activateBubble(d,i); });
+    .on("mouseover", function(d, i){ return activateBubble(d,i); })
+    .on("mouseleave", function(){ return resetBubbles(); }); 
 
     bubbleObj.append("text")
     .attr("class", "parentTxt")
@@ -87,14 +88,14 @@
     .on("mouseover", function(d,i) { return activateBubble(d,i); });
 
     for(var iB = 0; iB < nTop; iB++){
-        var childBubbles = svg.selectAll(".childBubble"+iB)
+        var childBubbles = svg.selectAll(".childBubble")
         .data(root.children[0].children)
         .enter()
         .append("g");
 
         childBubbles.append("image")
         .attr("class", "childBubble")
-        .attr("id", function(d,i) { return "childBubbleImg_" + iB; })
+        .attr("id", function(d,i) { return "childBubbleImg_" + i; })
         .attr("xlink:href", function(d){ return d.img;})
         .attr("width", oR/2)
         .attr("height", oR/2)
@@ -102,13 +103,14 @@
         .attr("y", function(d,i) { return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
         .attr("cursor","pointer")
         .style("opacity", 0.7)
-        .on("mouseover", function(d,i) { return activateBubble(d,i); });  //TO ADD: MOUSEOVER EVENT
+        .on("mouseover", function(d,i){ activateChildBubble.call(this, d,i); })
+        .on("mouseleave", function(){ return resetBubbles(); });  //TO ADD: MOUSEOVER EVENT
 
         childBubbles.append("text")
         .attr("class", "childBubbleTxt")
         .attr("id", function(d,i){ return "childBubbleTxt_" + i; })
-        .attr("x", function(d,i) {return (oR*(3*(iB+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
-        .attr("y", function(d,i) {return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
+        .attr("x", function(d,i) { return (oR*(3*(iB+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
+        .attr("y", function(d,i) { return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
         .style("opacity",0.7)
         .attr("text-anchor", "middle")
         .style("fill", "black") // #1f77b4
@@ -116,20 +118,71 @@
         .attr("cursor","pointer")
         .attr("dominant-baseline", "middle")
         .attr("alignment-baseline", "middle")
-        .text(function(d) {return d.name})
-        .on("mouseover", function(d,i) { return activateBubble(d,i); });  //TO ADD: MOUSEOVER EVENT
+        .text(function(d) { return d.name})
+        .on("mouseover", function(d,i) { return activateChildBubble(d,i); })
+        .on("mouseleave", function(){ return resetBubbles(); }); ;  //TO ADD: MOUSEOVER EVENT
         
     }
 
     });
 
     function activateBubble(d,i){
+
       var t = svg.transition()
       .duration(d3.event.altKey ? 7500 : 350);
 
-      t.select("#")
+      t.selectAll(".parentBubble")
+      // .attr("x", oR*2 - 0.6*oR*(-1))
+      .attr("height", oR*1.8)
+      .attr("width", oR*1.8)
+      .style("opacity", 1);
 
+      t.selectAll(".parentTxt")
+      .attr("x", oR*2 - 0.6*oR*(-1))
+      .attr("font-size", 10*1.5);
+
+      t.selectAll(".childBubble")
+      .attr("width", oR/3.0)
+      .attr("height", oR/3.0)
+      .style("opacity", 0.2)
+                  
     }
+
+    function activateChildBubble(d,i){
+
+      // debugger;
+      var t = svg.transition()
+      .duration(d3.event.altKey ? 7500 : 350);
+
+      t.selectAll(".parentBubble")
+      .attr("height", oR*0.7)
+      .attr("width", oR*0.7)
+      .style("opacity", 0.2);
+      // .attr("x", function(d,ii){ return oR*0.6*(3*(1+ii) - 1); })
+
+      var id_selected = this.id
+
+      t.select("#"+bo)
+      .attr("width", oR)
+      .attr("height", oR)
+      .style("opacity", 1);
+
+
+      t.selectAll(".childBubble")
+      .attr("width", function(d, j){
+        var s = id_selected;
+        return s !== this.id ? oR/3.0 : oR;
+      })
+      .attr("height", function(d, j){
+        var s = id_selected;
+        return s !== this.id ? oR/3.0 : oR;
+      })
+      .style("opacity", function(d, j){
+        var s = id_selected;
+        return s !== this.id ? 0.2 : 1;
+      });
+    }
+
 
     function resetBubbles(){
       w = window.innerWidth*0.68*0.95;
@@ -148,8 +201,9 @@
         t.select("#parentImg")
         .attr("width", oR)
         .attr("height", oR)
-        .attr("cx", function(d, i) {return oR*(3*(1+i)-1); })
-        .attr("cy", (h+oR)/3);
+        .attr("x", function(d, i) {return oR*(3*(1+i)-1); })
+        .attr("y", (h+oR)/3)
+        .style("opacity", 0.7);
  
         t.selectAll("#parentTxt")
         .attr("font-size", 10)
