@@ -85,7 +85,9 @@
     .attr("dominant-baseline", "middle")
     .attr("alignment-baseline", "middle")
     .text(function(d) { return d.name})     
-    .on("mouseover", function(d,i) { return activateBubble(d,i); });
+    .on("mouseover", function(d,i) { return activateBubble(d,i); })
+    .on("mouseleave", function(){ return resetBubbles(); }); 
+
 
     for(var iB = 0; iB < nTop; iB++){
         var childBubbles = svg.selectAll(".childBubble")
@@ -119,7 +121,7 @@
         .attr("dominant-baseline", "middle")
         .attr("alignment-baseline", "middle")
         .text(function(d) { return d.name})
-        .on("mouseover", function(d,i) { return activateChildBubble(d,i); })
+        .on("mouseover", function(d,i) { activateChildTxt.call(this, d,i); })
         .on("mouseleave", function(){ return resetBubbles(); }); ;  //TO ADD: MOUSEOVER EVENT
         
     }
@@ -133,13 +135,14 @@
 
       t.selectAll(".parentBubble")
       // .attr("x", oR*2 - 0.6*oR*(-1))
-      .attr("height", oR*1.8)
-      .attr("width", oR*1.8)
+      .attr("height", oR*1.5)
+      .attr("width", oR*1.5)
       .style("opacity", 1);
 
       t.selectAll(".parentTxt")
       .attr("x", oR*2 - 0.6*oR*(-1))
-      .attr("font-size", 10*1.5);
+      .attr("font-size", 10*1.5)
+      .attr("font-weight", "bold");
 
       t.selectAll(".childBubble")
       .attr("width", oR/3.0)
@@ -150,7 +153,6 @@
 
     function activateChildBubble(d,i){
 
-      // debugger;
       var t = svg.transition()
       .duration(d3.event.altKey ? 7500 : 350);
 
@@ -158,15 +160,29 @@
       .attr("height", oR*0.7)
       .attr("width", oR*0.7)
       .style("opacity", 0.2);
+
+      t.select(".parentTxt")
+      .attr("font-size", 7);
       // .attr("x", function(d,ii){ return oR*0.6*(3*(1+ii) - 1); })
 
       var id_selected = this.id
 
-      t.select("#"+bo)
+      var img_selected = t.select("#"+id_selected)
       .attr("width", oR)
       .attr("height", oR)
       .style("opacity", 1);
+      
+      var txt_id_x = img_selected
+      .map(function(d){ return {"id": d[0].nextSibling.getAttribute("id"),
+       "x": d[0].nextSibling.getAttribute("x")}});
 
+      var txt_id_selected = txt_id_x[0].id
+      var txt_x_selected = txt_id_x[0].x
+
+      t.select('#'+txt_id_selected)
+      .attr("font-size", 14)
+      .attr("x", +txt_x_selected + 100)
+      .attr("font-weight", "bold");
 
       t.selectAll(".childBubble")
       .attr("width", function(d, j){
@@ -198,17 +214,18 @@
       var t = svg.transition()
       .duration(650);
          
-        t.select("#parentImg")
-        .attr("width", oR)
-        .attr("height", oR)
-        .attr("x", function(d, i) {return oR*(3*(1+i)-1); })
-        .attr("y", (h+oR)/3)
-        .style("opacity", 0.7);
- 
-        t.selectAll("#parentTxt")
-        .attr("font-size", 10)
-        .attr("x", function(d, i) {return oR*(3*(1+i)-1); })
-        .attr("y", (h+oR)/3);
+      t.select("#parentImg")
+      .attr("width", oR)
+      .attr("height", oR)
+      .attr("x", function(d, i) {return oR*(3*(1+i)-1); })
+      .attr("y", (h+oR)/3)
+      .style("opacity", 0.7);
+
+      t.select(".parentTxt")
+      .attr("font-size", 10)
+      .attr("font-weight", "normal")
+      .attr("x", function(d, i) {return oR*(3*(1+i)-1); })
+      .attr("y", (h+oR)/3);
      
       for(var k = 0; k < nTop; k++) 
       {
@@ -216,6 +233,7 @@
         .attr("x", function(d,i) {return (oR*(3*(k+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
         .attr("y", function(d,i) {return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
         .attr("font-size", 6)
+        .attr("font-weight", "normal")
         .style("opacity",0.7);
  
         t.selectAll(".childBubble")
