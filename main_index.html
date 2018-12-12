@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<style type="text/css">
+#mainBubble {
+  background: #fff;
+  border: solid 1px #ddd;
+  box-shadow: 0 0 4px rgba(0,0,0,0);
+  font: 10px sans-serif;
+  height: 800px;
+  position: relative;
+  width: 80%;
+}
+         
+#mainBubble svg {
+  left: 0;
+  position: absolute;
+  top: 0;
+}
+                     
+#mainBubble circle.topBubble {
+  fill: #aaa;
+  stroke: #666;
+  stroke-width: 1.5px;
+ }
+</style>
+<head>
+    <script type="text/javascript" src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+  <div id="mainBubble" style="height: 307px;"></div>
+<title>
+  Bubble Menu
+</title>
+<script>
+    var w = window.innerWidth*0.68*0.95;
+    var h = Math.ceil(w*0.7);
+    var oR = 0;
+    var nTop = 0;
+
+    var svgContainer = d3.select("#mainBubble")
+        .style("height", h+"px");
+
+    var svg = d3.select("#mainBubble")
+        .append("svg")
+        .attr("class", "mainBubbleSVG")
+        .attr("width", 1000)
+        .attr("height", 800)
+        .on("mouseleave", function() { return resetBubbles(); });
+
+    d3.json("main_bubble.json", function(error, root){
+        console.log(error);
+        debugger;
+        var bubbleObj = svg.selectAll(".parentBubble")
+        .data(root.children)
+        .enter()
+        .append("g")
+        .attr("id", "parentImgandTxt")
+
+        nTop = root.children.length;
+        oR = w/(1+3*nTop); //if w=800, oR=50
+
+    h = Math.ceil(w/nTop*2); //if w=800, h = 320
+
+    svgContainer.style("height", h+"px");
+
+    bubbleObj.append("image")
+    .attr("id", "parentImg")
+    .attr("xlink:href", function(d){ return d.img; })
+    .attr("x", function(d,i) { return oR*(3*(1+i)-1); })
+    .attr("y", (h+oR)/3)
+    .attr("width", oR)
+    .attr("height", oR)
+    .style("opacity", 0.7);
+    // .on("mouseover", function(d, i){ return activateBubble(d,i); })
+
+    bubbleObj.append("text")
+    .attr("id", "parentTxt")
+    .attr("x", function(d, i) { return oR*(3*(1+i)-1); })
+    .attr("y", (h+oR)/3)
+    .style("fill", "black") // #1f77b4
+    .attr("font-size", 10)
+    .attr("text-anchor", "middle")
+    .attr("dominant-baseline", "middle")
+    .attr("alignment-baseline", "middle")
+    .text(function(d) { return d.name});      
+    // .on("mouseover", function(d,i) { return activateBubble(d,i); });
+
+    for(var iB = 0; iB < nTop; iB++){
+        var childBubbles = svg.selectAll(".childBubble"+iB)
+        .data(root.children[0].children)
+        .enter()
+        .append("g");
+
+        childBubbles.append("image")
+        .attr("id", function(d,i) { return "childBubbleImg_" + iB; })
+        .attr("xlink:href", function(d){ return d.img;})
+        .attr("width", oR/2)
+        .attr("height", oR/2)
+        .attr("x", function(d,i) { return (oR*(3*(iB+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
+        .attr("y", function(d,i) { return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
+        .attr("cursor","pointer")
+        .style("opacity", 0.7);  //TO ADD: MOUSEOVER EVENT
+
+        childBubbles.append("text")
+        .attr("id", function(d,i){ return "childBubbleTxt_" + i; })
+        .attr("x", function(d,i) {return (oR*(3*(iB+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
+        .attr("y", function(d,i) {return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
+        .style("opacity",0.7)
+        .attr("text-anchor", "middle")
+        .style("fill", "black") // #1f77b4
+        .attr("font-size", 6)
+        .attr("cursor","pointer")
+        .attr("dominant-baseline", "middle")
+        .attr("alignment-baseline", "middle")
+        .text(function(d) {return d.name});  //TO ADD: MOUSEOVER EVENT
+        
+    }
+
+    });
+
+    function resetBubbles(){
+      w = window.innerWidth*0.68*0.95;
+      oR = w/(1+3*nTop);
+       
+      h = Math.ceil(w/nTop*2);
+      svgContainer.style("height",h+"px");
+ 
+           
+      svg.attr("width", w);
+      svg.attr("height",h);       
+       
+      var t = svg.transition()
+      .duration(650);
+         
+        t.select("#parentImg")
+        .attr("width", oR)
+        .attr("height", oR)
+        .attr("cx", function(d, i) {return oR*(3*(1+i)-1); })
+        .attr("cy", (h+oR)/3);
+ 
+        t.selectAll("#parentTxt")
+        .attr("font-size", 10)
+        .attr("x", function(d, i) {return oR*(3*(1+i)-1); })
+        .attr("y", (h+oR)/3);
+     
+      for(var k = 0; k < nTop; k++) 
+      {
+        t.select("#childBubbleTxt_" + k)
+        .attr("x", function(d,i) {return (oR*(3*(k+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
+        .attr("y", function(d,i) {return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
+        .attr("font-size", 6)
+        .style("opacity",0.7);
+ 
+        t.select("#childBubbleImg_" + k)
+        .attr("height",  oR /2.0)
+        .attr("width", oR/2.0)
+        .style("opacity",0.5)
+        .attr("x", function(d,i) {return (oR*(3*(k+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
+        .attr("y", function(d,i) {return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); });
+                     
+      }   
+    }
+
+    window.onresize = resetBubbles;
+</script>
+</body>
+</html>
