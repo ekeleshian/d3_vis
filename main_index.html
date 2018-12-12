@@ -16,12 +16,20 @@
   position: absolute;
   top: 0;
 }
-                     
-#mainBubble circle.topBubble {
-  fill: #aaa;
-  stroke: #666;
-  stroke-width: 1.5px;
- }
+
+div.tooltip{
+  position: absolute;
+  text-align: center;
+  width: 200px;
+  height: 10px;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
 </style>
 <head>
     <script type="text/javascript" src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
@@ -36,6 +44,12 @@
     var h = Math.ceil(w*0.7);
     var oR = 0;
     var nTop = 0;
+    var x_coords = [];
+
+    var tooltip = d3.select("#mainBubble")
+    .append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
 
     var svgContainer = d3.select("#mainBubble")
         .style("height", h+"px");
@@ -48,8 +62,6 @@
         .on("mouseleave", function() { return resetBubbles(); });
 
     d3.json("main_bubble.json", function(error, root){
-        console.log(error);
-        // debugger;
         var bubbleObj = svg.selectAll(".parentBubble")
         .data(root.children)
         .enter()
@@ -59,74 +71,155 @@
         nTop = root.children.length;
         oR = w/(1+3*nTop); //if w=800, oR=50
 
-    h = Math.ceil(w/nTop*2); //if w=800, h = 320
+        h = Math.ceil(w/nTop*2); //if w=800, h = 320
 
-    svgContainer.style("height", h+"px");
+        svgContainer.style("height", h+"px");
 
-    bubbleObj.append("image")
-    .attr("class", "parentBubble")
-    .attr("id", "parentImg")
-    .attr("xlink:href", function(d){ return d.img; })
-    .attr("x", function(d,i) { return oR*(3*(1+i)-1); })
-    .attr("y", (h+oR)/3)
-    .attr("width", oR)
-    .attr("height", oR)
-    .style("opacity", 0.7)
-    .on("mouseover", function(d, i){ return activateBubble(d,i); })
-    .on("mouseleave", function(){ return resetBubbles(); }); 
-
-    bubbleObj.append("text")
-    .attr("class", "parentTxt")
-    .attr("x", function(d, i) { return oR*(3*(1+i)-1); })
-    .attr("y", (h+oR)/3)
-    .style("fill", "black") // #1f77b4
-    .attr("font-size", 10)
-    .attr("text-anchor", "middle")
-    .attr("dominant-baseline", "middle")
-    .attr("alignment-baseline", "middle")
-    .text(function(d) { return d.name})     
-    .on("mouseover", function(d,i) { return activateBubble(d,i); })
-    .on("mouseleave", function(){ return resetBubbles(); }); 
-
-
-    for(var iB = 0; iB < nTop; iB++){
-        var childBubbles = svg.selectAll(".childBubble")
-        .data(root.children[0].children)
-        .enter()
-        .append("g");
-
-        childBubbles.append("image")
-        .attr("class", "childBubble")
-        .attr("id", function(d,i) { return "childBubbleImg_" + i; })
-        .attr("xlink:href", function(d){ return d.img;})
-        .attr("width", oR/2)
-        .attr("height", oR/2)
-        .attr("x", function(d,i) { return (oR*(3*(iB+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
-        .attr("y", function(d,i) { return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
-        .attr("cursor","pointer")
+        bubbleObj.append("image")
+        .attr("class", "parentBubble")
+        .attr("id", "parentImg")
+        .attr("xlink:href", function(d){ return d.img; })
+        .attr("x", function(d,i) { return oR*(3*(1+i)-1); })
+        .attr("y", (h+oR)/3)
+        .attr("width", oR)
+        .attr("height", oR)
         .style("opacity", 0.7)
-        .on("mouseover", function(d,i){ activateChildBubble.call(this, d,i); })
-        .on("mouseleave", function(){ return resetBubbles(); });  //TO ADD: MOUSEOVER EVENT
+        .on("mouseover", function(d, i){ return activateBubble(d,i); })
+        .on("mouseleave", function(){ return resetBubbles(); }); 
 
-        childBubbles.append("text")
-        .attr("class", "childBubbleTxt")
-        .attr("id", function(d,i){ return "childBubbleTxt_" + i; })
-        .attr("x", function(d,i) { return (oR*(3*(iB+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
-        .attr("y", function(d,i) { return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
-        .style("opacity",0.7)
-        .attr("text-anchor", "middle")
+        bubbleObj.append("text")
+        .attr("class", "parentTxt")
+        .attr("x", function(d, i) { return oR*(3*(1+i)-1); })
+        .attr("y", (h+oR)/3)
         .style("fill", "black") // #1f77b4
-        .attr("font-size", 6)
-        .attr("cursor","pointer")
+        .attr("font-size", 14)
+        .attr("text-anchor", "middle")
         .attr("dominant-baseline", "middle")
         .attr("alignment-baseline", "middle")
-        .text(function(d) { return d.name})
-        .on("mouseover", function(d,i) { activateChildTxt.call(this, d,i); })
-        .on("mouseleave", function(){ return resetBubbles(); }); ;  //TO ADD: MOUSEOVER EVENT
-        
-    }
+        .text(function(d) { return d.name})     
+        .on("mouseover", function(d,i) { return activateBubble(d,i); })
+        .on("mouseleave", function(){ return resetBubbles(); }); 
+
+
+        for(var iB = 0; iB < nTop; iB++){
+            var childBubbles = svg.selectAll(".childBubble")
+            .data(root.children[0].children)
+            .enter()
+            .append("g");
+
+            childBubbles.append("image")
+            .attr("class", "childBubble")
+            .attr("id", function(d,i) { return "childBubbleImg_" + i; })
+            .attr("xlink:href", function(d){ return d.img;})
+            .attr("width", oR/2)
+            .attr("height", oR/2)
+            .attr("x", function(d,i) { 
+              var x = (oR*(3*(iB+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926));
+              x_coords.push(x);
+              return x; })
+            .attr("y", function(d,i) { return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
+            .attr("cursor","pointer")
+            .style("opacity", 0.7)
+            .on("mouseover", function(d,i){ activateChildBubble.call(this, d,i); })
+            .on("mouseleave", function(){ return resetBubbles(); });  //TO ADD: MOUSEOVER EVENT
+
+            childBubbles.append("text")
+            .attr("class", "childBubbleTxt")
+            .attr("id", function(d,i){ return "childBubbleTxt_" + i; })
+            .attr("x", function(d,i) { return (oR*(3*(iB+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
+            .attr("y", function(d,i) { return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
+            .style("opacity",0.7)
+            .attr("text-anchor", "middle")
+            .style("fill", "black") // #1f77b4
+            .attr("font-size", 9)
+            .attr("cursor","pointer")
+            .attr("dominant-baseline", "middle")
+            .attr("alignment-baseline", "middle")
+            .text(function(d) { return d.name})
+            .on("mouseover", function(d,i) { 
+              var txt_id_selected = this.id;
+
+              var t = svg.transition()
+              .duration(d3.event.altKey ? 7500 : 350);
+
+              //enlargens text
+              var txt_selected = t.select('#'+txt_id_selected)
+              .attr("text-weight", "bold")
+              .attr("font-size", 14);
+
+              //keeps the image associated to selected text enlarged  
+              var img_id_x = txt_selected
+              .map(function(d){ return {"id": d[0].previousSibling.getAttribute("id"),
+                "x": d[0].previousSibling.getAttribute("x")} });
+              var img_id_selected = img_id_x[0].id;
+              t.select("#"+img_id_selected)
+              .attr("width", oR)
+              .attr("height", oR)
+              .style("opacity", 1);
+
+              //keeps parent small
+              t.selectAll(".parentBubble")
+              .attr("height", oR*0.7)
+              .attr("width", oR*0.7)
+              .style("opacity", 0.2);
+              t.select(".parentTxt")
+              .attr("font-size", 7);
+
+              //keeps other images and their texts small
+              t.selectAll(".childBubble")
+              .attr("width", function(){
+                var s = img_id_selected;
+                return s !== this.id ? oR/3.0 : oR;
+              })
+              .attr("height", function(){
+                var s = img_id_selected;
+                return s !== this.id ? oR/3.0 : oR;
+              })
+              .style("opacity", function(){
+                var s = img_id_selected;
+                return s !== this.id ? 0.2 : 1;
+              });
+
+              t.selectAll(".childBubbleTxt")
+              .attr("font-size", function(){
+                var s = txt_id_selected;
+                return s !== this.id ? 6 : 14;
+              });
+
+              //tooltip animation
+              tooltip.transition()
+              .duration(200)
+              .style("opacity", .9);
+
+              tooltip.html("Distance from selected font: " + Math.ceil(d.distance))
+              .style("left", (d3.event.pageX) + "px")
+              .style("top", (d3.event.pageY-70) + "px"); })
+
+            .on("mouseleave", function(d){
+              var txt_id_selected = this.id;
+
+              var t = svg.transition()
+              .duration(d3.event.altKey ? 7500 : 350);
+
+              //enlargens text
+              var txt_selected = t.select('#'+txt_id_selected)
+              .attr("text-weight", "bold")
+              .attr("font-size", 14);
+
+              tooltip.transition()
+              .duration(500)
+              .style("opacity", 0);
+            });
+              // return resetBubbles(); });   //TO ADD: MOUSEOVER EVENT
+        }
 
     });
+
+    // function activateChildTxt(d, i){
+    //   var txt_id_selected = this.id
+
+
+    // }
 
     function activateBubble(d,i){
 
@@ -141,7 +234,7 @@
 
       t.selectAll(".parentTxt")
       .attr("x", oR*2 - 0.6*oR*(-1))
-      .attr("font-size", 10*1.5)
+      .attr("font-size", 14*1.5)
       .attr("font-weight", "bold");
 
       t.selectAll(".childBubble")
@@ -156,14 +249,15 @@
       var t = svg.transition()
       .duration(d3.event.altKey ? 7500 : 350);
 
+      //shrinks and opaques the parent img
       t.selectAll(".parentBubble")
       .attr("height", oR*0.7)
       .attr("width", oR*0.7)
       .style("opacity", 0.2);
 
+      //shrinks the parent text
       t.select(".parentTxt")
       .attr("font-size", 7);
-      // .attr("x", function(d,ii){ return oR*0.6*(3*(1+ii) - 1); })
 
       var id_selected = this.id
 
@@ -176,26 +270,36 @@
       .map(function(d){ return {"id": d[0].nextSibling.getAttribute("id"),
        "x": d[0].nextSibling.getAttribute("x")}});
 
-      var txt_id_selected = txt_id_x[0].id
-      var txt_x_selected = txt_id_x[0].x
+      var txt_id_selected = txt_id_x[0].id;
+      var txt_x_selected = txt_id_x[0].x;
 
-      t.select('#'+txt_id_selected)
+      var txt_elem = t.select('#'+txt_id_selected)
       .attr("font-size", 14)
-      .attr("x", +txt_x_selected + 100)
       .attr("font-weight", "bold");
 
+      //ensures text doesn't get shifted more than once before
+      //bubbles reset
+      if(+txt_x_selected < (x_coords[i] + 10)){
+        txt_elem.attr("x", +txt_x_selected + 100); }
+      
       t.selectAll(".childBubble")
-      .attr("width", function(d, j){
+      .attr("width", function(){
         var s = id_selected;
         return s !== this.id ? oR/3.0 : oR;
       })
-      .attr("height", function(d, j){
+      .attr("height", function(){
         var s = id_selected;
         return s !== this.id ? oR/3.0 : oR;
       })
-      .style("opacity", function(d, j){
+      .style("opacity", function(){
         var s = id_selected;
         return s !== this.id ? 0.2 : 1;
+      });
+
+      t.selectAll(".childBubbleTxt")
+      .attr("font-size", function(){
+        var s = txt_id_selected;
+        return s !== this.id ? 6 : 14;
       });
     }
 
@@ -222,7 +326,7 @@
       .style("opacity", 0.7);
 
       t.select(".parentTxt")
-      .attr("font-size", 10)
+      .attr("font-size", 14)
       .attr("font-weight", "normal")
       .attr("x", function(d, i) {return oR*(3*(1+i)-1); })
       .attr("y", (h+oR)/3);
@@ -232,7 +336,7 @@
         t.selectAll(".childBubbleTxt")
         .attr("x", function(d,i) {return (oR*(3*(k+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
         .attr("y", function(d,i) {return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); })
-        .attr("font-size", 6)
+        .attr("font-size", 9)
         .attr("font-weight", "normal")
         .style("opacity",0.7);
  
@@ -242,8 +346,8 @@
         .style("opacity",0.5)
         .attr("x", function(d,i) {return (oR*(3*(k+1)-1) + oR*1.5*Math.cos((i-1)*45/180*3.1415926)); })
         .attr("y", function(d,i) {return ((h+oR)/3 +        oR*1.5*Math.sin((i-1)*45/180*3.1415926)); });
-                     
-      }   
+
+      }
     }
 
     window.onresize = resetBubbles;
